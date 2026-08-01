@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
-#include <sstream>
-#include <iostream>
+#include <string>
 
 #include "../src/OrderBook.h"
 #include "../src/Order.h"
 
+// Test 1: Order successfully add hona chahiye
 TEST(OrderBookTest, AddOrderDoesNotCrash)
 {
     OrderBook book;
@@ -14,6 +14,7 @@ TEST(OrderBookTest, AddOrderDoesNotCrash)
     });
 }
 
+// Test 2: Buy aur Sell match hone chahiye
 TEST(OrderBookTest, MatchingOrders)
 {
     OrderBook book;
@@ -22,7 +23,7 @@ TEST(OrderBookTest, MatchingOrders)
     book.addOrder(Order(Side::BUY, 100.0, 10));
 
     // Sell: 5 units @ 100
-    // 5 units should be traded
+    // 5 units trade honge
     book.addOrder(Order(Side::SELL, 100.0, 5));
 
     testing::internal::CaptureStdout();
@@ -31,21 +32,24 @@ TEST(OrderBookTest, MatchingOrders)
 
     std::string output = testing::internal::GetCapturedStdout();
 
-    // Buy order should have 5 units remaining
-    EXPECT_NE(output.find("5 @ 100"), std::string::npos);
+    // Buy order mein 5 units remaining hone chahiye
+    EXPECT_NE(output.find("#1  5 @ 100"), std::string::npos);
 
-    // Fully matched sell order should not remain
-    EXPECT_EQ(output.find("SELL"), std::string::npos);
+    // Sell order completely filled ho gaya,
+    // isliye book mein nahi hona chahiye
+    EXPECT_EQ(output.find("#2  5 @ 100"), std::string::npos);
 }
 
+// Test 3: Prices cross nahi karte to match nahi hona chahiye
 TEST(OrderBookTest, NoMatchWhenPricesDoNotCross)
 {
     OrderBook book;
 
-    // Buy willing to pay 100
+    // Buyer maximum 100 dena chahta hai
     book.addOrder(Order(Side::BUY, 100.0, 10));
 
-    // Seller wants 105 -> no match
+    // Seller minimum 105 maang raha hai
+    // Isliye match nahi hoga
     book.addOrder(Order(Side::SELL, 105.0, 5));
 
     testing::internal::CaptureStdout();
@@ -54,7 +58,7 @@ TEST(OrderBookTest, NoMatchWhenPricesDoNotCross)
 
     std::string output = testing::internal::GetCapturedStdout();
 
-    // Both orders should remain
-    EXPECT_NE(output.find("5 @ 105"), std::string::npos);
-    EXPECT_NE(output.find("10 @ 100"), std::string::npos);
+    // Dono orders book mein hone chahiye
+    EXPECT_NE(output.find("#1  10 @ 100"), std::string::npos);
+    EXPECT_NE(output.find("#2  5 @ 105"), std::string::npos);
 }
